@@ -3,16 +3,16 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
-// --- IMPORT CONTROLLERS ---
-const { register, verifyOTP, login, googleLogin, forgotPassword } = require('./controllers/auth');
-const { getProfile, updateProfile } = require('./controllers/profile');
-const { uploadProduct, getAllProducts } = require('./controllers/product');
-const { createPost, getPosts } = require('./controllers/forum');
-const { askAI } = require('./controllers/ai');
+// --- 1. UPDATE: IMPORT CONTROLLERS DENGAN NAMA FILE BARU ---
+const { register, verifyOTP, login, googleLogin, forgotPassword } = require('./controllers/auth/auth');
+const { getProfile, updateProfile } = require('./controllers/profile/profile');
+const { uploadProduct, getAllProducts } = require('./controllers/product/product');
+const { createPost, getPosts } = require('./controllers/forum/forum');
+const { askAI } = require('./controllers/ai/ai');
 
 // --- IMPORT MIDDLEWARE ---
-const upload = require('./middleware/upload');   // Penjaga File Upload
-const verifyToken = require('./middleware/auth'); // Penjaga Pintu Masuk (Satpam)
+const upload = require('./middleware/upload');   
+const verifyToken = require('./middleware/auth'); 
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -21,9 +21,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Menyajikan file statis (Frontend & Folder Uploads)
+// Menyajikan file statis (CSS, JS, & Uploads)
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
+// --- 2. UPDATE: ROUTING HALAMAN UTAMA KE dashboardutama.html ---
+// Karena index.html sudah diganti, kita harus paksa server membaca file barumu saat web dibuka
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'dashboardutama.html'));
+});
 
 // ==========================================
 // 🔓 API PUBLIK (Siapa saja boleh akses)
@@ -35,20 +41,17 @@ app.post('/api/google-login', googleLogin);
 app.post('/api/forgot-password', forgotPassword);
 
 app.post('/api/ai/search', askAI);
-app.get('/api/products', getAllProducts); // Melihat daftar barang tidak perlu login
-app.get('/api/forum', getPosts);          // Melihat forum tidak perlu login
+app.get('/api/products', getAllProducts); 
+app.get('/api/forum', getPosts);          
 
 // ==========================================
-// 🔒 API PRIVAT (Wajib Login / Bawa Token)
+// 🔒 API PRIVAT (Wajib Login / Bawa Token JWT)
 // ==========================================
-// Rute Profil
 app.get('/api/profile', verifyToken, getProfile);
 app.put('/api/profile', verifyToken, updateProfile);
 
-// Rute Jualan (Produk) -> Melewati Satpam Tiket (verifyToken) & Pemeriksa File (upload.single)
 app.post('/api/products', verifyToken, upload.single('media'), uploadProduct);
 
-// Rute Forum
 app.post('/api/forum', verifyToken, createPost);
 
 // ==========================================
