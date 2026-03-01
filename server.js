@@ -3,6 +3,10 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
+// --- INJEKSI AUTO-DB ---
+// Pastikan file config/db.js kamu sudah mengekspor { pool, initDB }
+const { pool, initDB } = require('./config/db'); 
+
 // --- 1. UPDATE: IMPORT CONTROLLERS DENGAN NAMA FILE BARU ---
 const { register, verifyOTP, login, googleLogin, forgotPassword } = require('./controllers/auth/auth');
 const { getProfile, updateProfile } = require('./controllers/profile/profile');
@@ -17,6 +21,9 @@ const verifyToken = require('./middleware/auth');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// Jalankan auto-migration agar tabel "users" dkk langsung tercipta
+initDB();
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -26,7 +33,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
 // --- 2. UPDATE: ROUTING HALAMAN UTAMA KE dashboardutama.html ---
-// Karena index.html sudah diganti, kita harus paksa server membaca file barumu saat web dibuka
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'dashboardutama.html'));
 });
